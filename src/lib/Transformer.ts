@@ -1,10 +1,10 @@
 import * as ts from 'typescript';
 import {
     ClassDeclaration,
-    ClassElement,
+    ClassElement, ConstructorDeclaration,
     createAssignment,
     createBinary,
-    createCall,
+    createCall, createConditional,
     createElementAccess,
     createEmptyStatement,
     createExpressionStatement,
@@ -31,7 +31,7 @@ import {
     ImportDeclaration,
     isBindingElement,
     isCallOrNewExpression,
-    isClassDeclaration,
+    isClassDeclaration, isConstructorDeclaration,
     isDecorator,
     isFunctionDeclaration,
     isFunctionExpression,
@@ -43,17 +43,17 @@ import {
     isMethodSignature,
     isNamedImports,
     isObjectLiteralElement,
-    isObjectLiteralExpression,
+    isObjectLiteralExpression, isParameter,
     isParameterPropertyDeclaration,
     isPropertyAssignment,
     isPropertyDeclaration,
     isPropertySignature,
-    isStringLiteral,
+    isStringLiteral, isTypeParameterDeclaration,
     isVariableDeclaration,
     NodeArray,
     NodeFlags,
     Program,
-    PropertyDeclaration,
+    PropertyDeclaration, QuestionToken,
     Statement,
     SyntaxKind,
     TransformationContext,
@@ -61,6 +61,7 @@ import {
 } from 'typescript';
 import MethodBuilder from "./builders/MethodBuilder";
 import {create} from "domain";
+import {ParameterDeclaration} from "typescript";
 
 const decorators = [ 'Tson', 'TsonProp', 'TsonIgnore' ];
 
@@ -125,19 +126,46 @@ export default function Transformer(program: Program) {
         return false;
     }
 
+    function getConstructorDeclaration(classDeclaration: ClassDeclaration): ConstructorDeclaration | null {
+        if (classDeclaration.members && classDeclaration.members.length > 0) {
+            for (const member of classDeclaration.members) {
+                if (isConstructorDeclaration(member)) {
+                    return member;
+                }
+            }
+        }
+        return null;
+    }
+
+    function collectConstructorParameters(classDeclaration: ClassDeclaration): ReadonlyArray<ParameterDeclaration> {
+        const constructorDeclaration = getConstructorDeclaration(classDeclaration);
+        if (constructorDeclaration == null || !(constructorDeclaration.parameters && constructorDeclaration.parameters.length > 0)) return [];
+        const parameters: ParameterDeclaration[] = [];
+        for (const parameter of constructorDeclaration.parameters) {
+            if (isParameter(parameter)) {
+                parameters.push(parameter);
+            }
+        }
+        return parameters;
+    }
+
+    function createConstructorArgumentsArray(classDeclaration: ClassDeclaration) {
+        return collectConstructorParameters(classDeclaration).map(createSerializerExpression);
+    }
+
     function createConstructStatement(classDeclaration: ClassDeclaration): Statement {
         const classIdentifier = createIdentifier(classDeclaration.name.text);
         const variable = createVariableDeclaration(
             DESERIALIZED_INSTANCE_NAME,
             createTypeReferenceNode(classDeclaration.name, undefined),
-            createNew(classIdentifier, undefined, undefined)
+            createNew(classIdentifier, undefined, createConstructorArgumentsArray(classDeclaration))
         );
         return createVariableStatement(undefined, [ variable ]);
     }
 
     function createConstructAndReturn(classDeclaration: ClassDeclaration): Statement {
         const classIdentifier = createIdentifier(classDeclaration.name.text);
-        return createReturn(createNew(classIdentifier, undefined, undefined))
+        return createReturn(createNew(classIdentifier, undefined, createConstructorArgumentsArray(classDeclaration)))
     }
 
     function createReturnInstanceStatement(): Statement {
@@ -150,7 +178,7 @@ export default function Transformer(program: Program) {
         return [ SyntaxKind.AnyKeyword, SyntaxKind.StringKeyword, SyntaxKind.NumberKeyword, SyntaxKind.BooleanKeyword ].includes(type.kind);
     }
 
-    function getTsonPropData(member: PropertyDeclaration): TsonPropData {
+    function getTsonPropData(member: PropertyDeclaration | ParameterDeclaration): TsonPropData {
         const data: TsonPropData = {
             name: createLiteral((member.name as Identifier).text),
             converter: null,
@@ -186,7 +214,7 @@ export default function Transformer(program: Program) {
         return data;
     }
 
-    function createBuiltInSerializerFunction(member: PropertyDeclaration, expression: Expression): Expression {
+    function createBuiltInSerializerFunction(member: PropertyDeclaration | ParameterDeclaration, expression: Expression): Expression {
         const kind = member.type ? member.type.kind : SyntaxKind.AnyKeyword;
         switch (kind) {
             case SyntaxKind.StringKeyword:
@@ -225,40 +253,45 @@ export default function Transformer(program: Program) {
         return typeName === 'Date';
     }
 
-    function createSerializerFunction(member: PropertyDeclaration, propData: TsonPropData, expression: Expression): Expression {
-        if (propData.converter != null) {
-            return createCall(createParen(propData.converter), undefined, [expression]);
+    function createSerializerFunction(member: PropertyDeclaration | ParameterDeclaration): Expression {
+        const tsonPropData = getTsonPropData(member);
+        const getJsonPropertyExpression = createElementAccess(createIdentifier(FROM_JSON_ARG_NAME), tsonPropData.name);
+        if (tsonPropData.converter != null) {
+            return createCall(createParen(tsonPropData.converter), undefined, [getJsonPropertyExpression]);
         }
         if (isBuildInType(member.type)) {
-            return createBuiltInSerializerFunction(member, expression);
+            return createBuiltInSerializerFunction(member, getJsonPropertyExpression);
         }
         if (typeExportsJsonFunction(member.type)) {
             const typeName = checker.typeToString(checker.getTypeFromTypeNode(member.type));
             const propertyAccess = createPropertyAccess(createIdentifier(typeName), createIdentifier(FROM_JSON_FN_NAME));
-            return createCall(propertyAccess, undefined, [expression]);
+            return createCall(propertyAccess, undefined, [getJsonPropertyExpression]);
         }
         if (typeIsDate(member.type)) {
-            return createNew(createIdentifier('Date'), undefined, [expression]);
+            return createNew(createIdentifier('Date'), undefined, [getJsonPropertyExpression]);
         }
-        return expression;
+        return getJsonPropertyExpression;
     }
 
     function createAssignmentStatement(member: PropertyDeclaration) {
-        const tsonPropData = getTsonPropData(member);
         const leftSide = createPropertyAccess(createIdentifier(DESERIALIZED_INSTANCE_NAME), member.name as Identifier);
-        const getJsonPropertyExpression = createElementAccess(createIdentifier(FROM_JSON_ARG_NAME), tsonPropData.name);
-
-        const assignment = createAssignment(leftSide, createSerializerFunction(member, tsonPropData, getJsonPropertyExpression));
+        const assignment = createAssignment(leftSide, createSerializerFunction(member));
         return createExpressionStatement(assignment);
     }
 
     function createOptionalSerializerStatement(member: PropertyDeclaration): Statement {
         const jsonAccessExpression = createElementAccess(createIdentifier(FROM_JSON_ARG_NAME), createLiteral(member.name as Identifier));
-        const ifStatement = createBinary(jsonAccessExpression, SyntaxKind.ExclamationEqualsToken, createNull());
-        return createIf(ifStatement, createAssignmentStatement(member));
+        const statement = createBinary(jsonAccessExpression, SyntaxKind.ExclamationEqualsToken, createNull());
+        return createIf(statement, createAssignmentStatement(member));
     }
 
-    function isOptionalPropertyDeclaration(member: PropertyDeclaration): boolean {
+    function createConditionalSerializerExpression(member: ParameterDeclaration): Expression {
+        const jsonAccessExpression = createElementAccess(createIdentifier(FROM_JSON_ARG_NAME), createLiteral(member.name as Identifier));
+        const statement = createBinary(jsonAccessExpression, SyntaxKind.ExclamationEqualsToken, createNull());
+        return createConditional(statement, createSerializerFunction(member), member.initializer);
+    }
+
+    function isOptionalPropertyDeclaration(member: PropertyDeclaration | ParameterDeclaration): boolean {
         return member.questionToken != null || member.initializer != null;
     }
 
@@ -270,6 +303,16 @@ export default function Transformer(program: Program) {
             return createAssignmentStatement(member);
         }
         return createEmptyStatement();
+    }
+
+    function createSerializerExpression(parameter: ParameterDeclaration): Expression {
+        const jsonAccessExpression = createElementAccess(createIdentifier(FROM_JSON_ARG_NAME), createLiteral(parameter.name as Identifier));
+        const statement = createBinary(jsonAccessExpression, SyntaxKind.ExclamationEqualsToken, createNull());
+        if (isOptionalPropertyDeclaration(parameter)) {
+            return createConditional(statement, createSerializerFunction(parameter), parameter.initializer || createNull());
+        } else {
+            return createSerializerFunction(parameter);
+        }
     }
 
     function collectMembers(classDeclaration: ClassDeclaration): NodeArray<ClassElement> {

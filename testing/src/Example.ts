@@ -4,6 +4,20 @@ import {Model} from "./Model.g";
 
 @Tson
 export class Example {
+
+    public readonly readonlyProp: string;
+    public readonly readonlyBool: boolean;
+    public readonly readonlyDate: Date;
+    public readonly readonlyModel: Model;
+
+    constructor(readonlyProp: string, readonlyBool: boolean, readonlyModel?: Model, readonlyDate: Date = new Date()) {
+        this.readonlyProp = readonlyProp;
+        this.readonlyBool = readonlyBool;
+        this.readonlyDate = readonlyDate;
+        this.readonlyModel = readonlyModel;
+    }
+
+
     @TsonIgnore
     public ignoredProperty: string = 'assign me in constructor';
     @TsonProp('override_name')
