@@ -76,7 +76,6 @@ export class Example {
 
 #### TODO
 
-* Properly call constructor.
 * Deserialize objects.
 * Safe variable declaration.
 
