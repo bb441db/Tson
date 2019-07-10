@@ -51,7 +51,6 @@ export default function (program: Program, node: ClassDeclaration) {
     const { getTsonPropData } = decoratorUtilsFactory(checker);
 
     const jsonFunctionIdentifier = createUniqueName(FROM_JSON_FN_NAME);
-    console.log(jsonFunctionIdentifier);
     if (jsonFunctionIdentifier.text !== FROM_JSON_FN_NAME) {
         throw Error(`Cannot create unique identifier '${FROM_JSON_FN_NAME}'`);
     }
