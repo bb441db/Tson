@@ -53,7 +53,6 @@ export class Example {
 
 // Example.g.ts
 
-import { Tson, TsonIgnore, TsonProp } from 'tson';
 import { Model } from "./Model.g";
 /*
     *** DO NOT EDIT! ***
@@ -104,6 +103,5 @@ export class Example {
 
 #### TODO
 
-* Deserialize objects.
-* Safe variable declaration.
+* Deserialize objects | interfaces.
 
