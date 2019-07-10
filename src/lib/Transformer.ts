@@ -1,34 +1,58 @@
 import * as ts from 'typescript';
 import {
+    createIdentifier,
     Decorator,
-    getMutableClone,
-    ImportDeclaration,
+    getMutableClone, Identifier,
+    ImportDeclaration, isCallExpression,
     isClassDeclaration,
-    isDecorator,
+    isDecorator, isIdentifier,
     isImportDeclaration,
-    isNamedImports,
+    isNamedImports, isStringLiteral, isToken,
     Program,
     TransformationContext,
 } from 'typescript';
 import createJsonMethodForClass from "./createJsonMethodForClass";
 
-const decorators = [ 'Tson', 'TsonProp', 'TsonIgnore' ];
+const LIBRARY_NAME = 'tson';
 
 export default function Transformer(program: Program) {
 
+    function isTsonLibraryImportDeclaration(importDeclaration: ImportDeclaration) {
+        return isStringLiteral(importDeclaration.moduleSpecifier) && importDeclaration.moduleSpecifier.text === LIBRARY_NAME
+    }
+
     function updateImport(node: ImportDeclaration): ImportDeclaration | undefined {
-        if (isNamedImports(node.importClause.namedBindings)) {
-            /*if (node.importClause.namedBindings.elements.every(element => decorators.includes(element.propertyName.text))) {
-                return undefined;
-            }*/
+        // Library only exports compile time decorators so we can safely remove this import declaration
+        if (isTsonLibraryImportDeclaration(node)) {
+            return undefined;
         }
         return node;
     }
 
-    function shouldRemoveDecorator(node: Decorator): boolean {
-        return decorators.includes(node.expression['escapedText']) || shouldRemoveDecorator((node['expression'] as unknown) as Decorator);
+    function importsIdentifier(node: ImportDeclaration, identifier: Identifier): boolean {
+        if (isNamedImports(node.importClause.namedBindings)) {
+            for (const element of node.importClause.namedBindings.elements) {
+                if (element.name.text === identifier.text) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
+    function shouldRemoveDecorator(node: Decorator): boolean {
+        const tsonImportDeclaration = node.getSourceFile()
+            .statements
+            .find(statement => isImportDeclaration(statement) && isTsonLibraryImportDeclaration(statement)) as ImportDeclaration;
+        if (tsonImportDeclaration != null) {
+            if (isCallExpression(node.expression) && isIdentifier(node.expression.expression)) {
+                return importsIdentifier(tsonImportDeclaration, node.expression.expression);
+            } else if (isIdentifier(node.expression)) {
+                return importsIdentifier(tsonImportDeclaration, node.expression);
+            }
+        }
+        return false;
+    }
 
     return function transform<T extends ts.Node>(context: TransformationContext) {
         return function (rootNode: T) {

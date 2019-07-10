@@ -1,5 +1,3 @@
-// @ts-ignore
-import { Tson, TsonIgnore, TsonProp } from 'tson';
 import { Model } from "./Model.g";
 /*
     *** DO NOT EDIT! ***
