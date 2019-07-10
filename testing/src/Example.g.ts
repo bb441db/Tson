@@ -24,20 +24,24 @@ export class Example {
     public booleanProperty: boolean = true;
     public dateProperty: Date = new Date();
     public deserializableProperty: Model;
-    public static fromJson(_json: any): Example {
-        var _deserialized: Example = new Example(String(_json["readonlyProp"]), Boolean(_json["readonlyBool"]), _json["readonlyModel"] != null ? Model.fromJson(_json["readonlyModel"]) : null, _json["readonlyDate"] != null ? new Date(_json["readonlyDate"]) : new Date());
-        _deserialized.overrideName = String(_json["override_name"]);
-        if (_json["customConverter"] != null)
-            _deserialized.customConverter = ((value: any) => value === 'yes')(_json['override_name']);
-        if (_json["stringProperty"] != null)
-            _deserialized.stringProperty = String(_json["stringProperty"]);
-        if (_json["numberProperty"] != null)
-            _deserialized.numberProperty = Number(_json["numberProperty"]);
-        if (_json["booleanProperty"] != null)
-            _deserialized.booleanProperty = Boolean(_json["booleanProperty"]);
-        if (_json["dateProperty"] != null)
-            _deserialized.dateProperty = new Date(_json["dateProperty"]);
-        _deserialized.deserializableProperty = Model.fromJson(_json["deserializableProperty"]);
-        return _deserialized;
+    public static fromJson(json: any): Example {
+        const readonlyProp: string = String(json["readonlyProp"]);
+        const readonlyBool: boolean = Boolean(json["readonlyBool"]);
+        const readonlyModel: Model | undefined = json["readonlyModel"] != null ? json["readonlyModel"] : undefined;
+        const readonlyDate: Date = json["readonlyDate"] != null ? new Date(json["readonlyDate"]) : new Date();
+        const deserialized: Example = new Example(readonlyProp, readonlyBool, readonlyModel, readonlyDate);
+        deserialized.overrideName = String(json["override_name"]);
+        if (json["customConverter"] != null)
+            deserialized.customConverter = ((value: any) => value === 'yes')(json['override_name']);
+        if (json["stringProperty"] != null)
+            deserialized.stringProperty = String(json["stringProperty"]);
+        if (json["numberProperty"] != null)
+            deserialized.numberProperty = Number(json["numberProperty"]);
+        if (json["booleanProperty"] != null)
+            deserialized.booleanProperty = Boolean(json["booleanProperty"]);
+        if (json["dateProperty"] != null)
+            deserialized.dateProperty = new Date(json["dateProperty"]);
+        deserialized.deserializableProperty = json["deserializableProperty"];
+        return deserialized;
     }
 }

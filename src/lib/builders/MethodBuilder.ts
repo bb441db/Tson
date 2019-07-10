@@ -4,7 +4,7 @@ import {
     ClassElement, createArrowFunction,
     createFunctionDeclaration, createMethod,
     createModifier, createParameter,
-    FunctionDeclaration,
+    FunctionDeclaration, Identifier,
     Modifier,
     ParameterDeclaration,
     SyntaxKind, Type, TypeNode
@@ -15,7 +15,7 @@ class MethodBuilder {
 
     private modifiers: Modifier[] = [];
     private parameters: ParameterDeclaration[] = [];
-    private name: string;
+    private name: string | Identifier;
     private blockBuilder: BlockBuilder = new BlockBuilder();
     private type?: TypeNode;
 
@@ -29,7 +29,7 @@ class MethodBuilder {
         return this;
     }
 
-    setName(name: string): MethodBuilder {
+    setName(name: string | Identifier): MethodBuilder {
         this.name = name;
         return this;
     }
@@ -44,7 +44,7 @@ class MethodBuilder {
         return this;
     }
 
-    addParameter(name: string, typeNode?: TypeNode): MethodBuilder {
+    addParameter(name: string | Identifier, typeNode?: TypeNode): MethodBuilder {
         this.parameters.push(createParameter(undefined, undefined, undefined, name, undefined, typeNode));
         return this;
     }
