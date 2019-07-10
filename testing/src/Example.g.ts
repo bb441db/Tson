@@ -1,6 +1,7 @@
 // @ts-ignore
 import { Tson, TsonIgnore, TsonProp } from 'tson';
 import { Model } from "./Model.g";
+const readonlyProp_1 = 'lol';
 /*
     *** DO NOT EDIT! ***
     Generated deserializable class from: Example.ts.
@@ -24,24 +25,24 @@ export class Example {
     public booleanProperty: boolean = true;
     public dateProperty: Date = new Date();
     public deserializableProperty: Model;
-    public static fromJson(json: any): Example {
-        const readonlyProp: string = String(json["readonlyProp"]);
-        const readonlyBool: boolean = Boolean(json["readonlyBool"]);
-        const readonlyModel: Model | undefined = json["readonlyModel"] != null ? json["readonlyModel"] : undefined;
-        const readonlyDate: Date = json["readonlyDate"] != null ? new Date(json["readonlyDate"]) : new Date();
-        const deserialized: Example = new Example(readonlyProp, readonlyBool, readonlyModel, readonlyDate);
-        deserialized.overrideName = String(json["override_name"]);
-        if (json["customConverter"] != null)
-            deserialized.customConverter = ((value: any) => value === 'yes')(json['override_name']);
-        if (json["stringProperty"] != null)
-            deserialized.stringProperty = String(json["stringProperty"]);
-        if (json["numberProperty"] != null)
-            deserialized.numberProperty = Number(json["numberProperty"]);
-        if (json["booleanProperty"] != null)
-            deserialized.booleanProperty = Boolean(json["booleanProperty"]);
-        if (json["dateProperty"] != null)
-            deserialized.dateProperty = new Date(json["dateProperty"]);
-        deserialized.deserializableProperty = json["deserializableProperty"];
-        return deserialized;
+    public static fromJson(data_1: any): Example {
+        const readonlyProp_2: string = String(data_1["readonlyProp"]);
+        const readonlyBool_1: boolean = Boolean(data_1["readonlyBool"]);
+        const readonlyModel_1: Model | undefined = data_1["readonlyModel"] != null ? Model.fromJson(data_1["readonlyModel"]) : undefined;
+        const readonlyDate_1: Date = data_1["readonlyDate"] != null ? new Date(data_1["readonlyDate"]) : new Date();
+        const instance_1: Example = new Example(readonlyProp_2, readonlyBool_1, readonlyModel_1, readonlyDate_1);
+        instance_1.overrideName = String(data_1["override_name"]);
+        if (data_1["customConverter"] != null)
+            instance_1.customConverter = ((value: any) => value === 'yes')(data_1['override_name']);
+        if (data_1["stringProperty"] != null)
+            instance_1.stringProperty = String(data_1["stringProperty"]);
+        if (data_1["numberProperty"] != null)
+            instance_1.numberProperty = Number(data_1["numberProperty"]);
+        if (data_1["booleanProperty"] != null)
+            instance_1.booleanProperty = Boolean(data_1["booleanProperty"]);
+        if (data_1["dateProperty"] != null)
+            instance_1.dateProperty = new Date(data_1["dateProperty"]);
+        instance_1.deserializableProperty = Model.fromJson(data_1["deserializableProperty"]);
+        return instance_1;
     }
 }

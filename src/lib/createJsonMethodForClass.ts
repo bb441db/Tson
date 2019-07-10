@@ -11,7 +11,6 @@ import {
     createExpressionStatement,
     createIdentifier,
     createIf,
-    createIntersectionTypeNode,
     createKeywordTypeNode,
     createLiteral,
     createModifier,
@@ -20,7 +19,7 @@ import {
     createParen,
     createPropertyAccess,
     createReturn,
-    createTypeReferenceNode, createUnionTypeNode,
+    createTypeReferenceNode, createUnionTypeNode, createUniqueName,
     createVariableDeclaration,
     createVariableDeclarationList,
     createVariableStatement,
@@ -37,25 +36,27 @@ import {
     SyntaxKind,
     TypeNode
 } from "typescript";
-import IdentifierStore from "./IdentifierStore";
 import MethodBuilder from "./builders/MethodBuilder";
 import propertyUtilsFactory from "./utils/propertyUtilsFactory";
 import decoratorUtilsFactory, {TsonPropData} from "./utils/decoratorUtilsFactory";
 import BlockBuilder from "./builders/BlockBuilder";
 
 const FROM_JSON_FN_NAME = 'fromJson';
-const FROM_JSON_ARG_NAME = 'json';
-const DESERIALIZED_INSTANCE_NAME = 'deserialized';
+const FROM_JSON_ARG_NAME = 'data';
+const DESERIALIZED_INSTANCE_NAME = 'instance';
 
 export default function (program: Program, node: ClassDeclaration) {
     const checker = program.getTypeChecker();
-    const identifierStore = new IdentifierStore(checker, node);
     const { collectConstructorParameters, collectMembers } = propertyUtilsFactory(checker);
     const { getTsonPropData } = decoratorUtilsFactory(checker);
 
-    const instanceIdentifier = identifierStore.createIdentifier(DESERIALIZED_INSTANCE_NAME);
-    const jsonArgumentIdentifier = identifierStore.createIdentifier(FROM_JSON_ARG_NAME);
-    const jsonFunctionIdentifier = identifierStore.createIdentifier(FROM_JSON_FN_NAME);
+    const jsonFunctionIdentifier = createUniqueName(FROM_JSON_FN_NAME);
+    console.log(jsonFunctionIdentifier);
+    if (jsonFunctionIdentifier.text !== FROM_JSON_FN_NAME) {
+        throw Error(`Cannot create unique identifier '${FROM_JSON_FN_NAME}'`);
+    }
+    const instanceIdentifier = createUniqueName(DESERIALIZED_INSTANCE_NAME);
+    const jsonArgumentIdentifier = createUniqueName(FROM_JSON_ARG_NAME);
 
     function isBuildInType(type: TypeNode): boolean {
         if (type == null) return true; // implicit any
@@ -75,10 +76,9 @@ export default function (program: Program, node: ClassDeclaration) {
             if (isMethodDeclaration(valueDeclaration)) {
                 if (valueDeclaration.parameters && valueDeclaration.parameters.length > 0) {
                     const firstParam = valueDeclaration.parameters[0];
-                    const paramNameMatches = (firstParam.name as Identifier).text === jsonArgumentIdentifier.text;
                     const paramTypeMatches = firstParam.type.kind === SyntaxKind.AnyKeyword;
                     const typeMatches = type === checker.getTypeFromTypeNode(valueDeclaration.type);
-                    return typeMatches && paramNameMatches && paramTypeMatches;
+                    return typeMatches && paramTypeMatches;
                 }
             }
         }
@@ -104,7 +104,7 @@ export default function (program: Program, node: ClassDeclaration) {
         const blockBuilder = new BlockBuilder().setMultiLine(true);
         const identifiers: Expression[] = [];
         for (const parameter of constructorParameters) {
-            const identifier = parameter.name as Identifier;
+            const identifier = createUniqueName((parameter.name as Identifier).text);
             identifiers.push(identifier);
             const type = parameter.questionToken ? createUnionTypeNode([ parameter.type, createKeywordTypeNode(SyntaxKind.UndefinedKeyword) ]) : parameter.type;
             const variableDeclaration = createVariableDeclaration(identifier, type, createSerializerExpression(parameter));
