@@ -1,7 +1,6 @@
 // @ts-ignore
 import { Tson, TsonIgnore, TsonProp } from 'tson';
 import { Model } from "./Model.g";
-const readonlyProp_1 = 'lol';
 /*
     *** DO NOT EDIT! ***
     Generated deserializable class from: Example.ts.
@@ -26,11 +25,11 @@ export class Example {
     public dateProperty: Date = new Date();
     public deserializableProperty: Model;
     public static fromJson(data_1: any): Example {
-        const readonlyProp_2: string = String(data_1["readonlyProp"]);
+        const readonlyProp_1: string = String(data_1["readonlyProp"]);
         const readonlyBool_1: boolean = Boolean(data_1["readonlyBool"]);
         const readonlyModel_1: Model | undefined = data_1["readonlyModel"] != null ? Model.fromJson(data_1["readonlyModel"]) : undefined;
         const readonlyDate_1: Date = data_1["readonlyDate"] != null ? new Date(data_1["readonlyDate"]) : new Date();
-        const instance_1: Example = new Example(readonlyProp_2, readonlyBool_1, readonlyModel_1, readonlyDate_1);
+        const instance_1: Example = new Example(readonlyProp_1, readonlyBool_1, readonlyModel_1, readonlyDate_1);
         instance_1.overrideName = String(data_1["override_name"]);
         if (data_1["customConverter"] != null)
             instance_1.customConverter = ((value: any) => value === 'yes')(data_1['override_name']);
