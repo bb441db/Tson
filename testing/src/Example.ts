@@ -2,47 +2,32 @@
 import {Tson, TsonIgnore, TsonProp} from 'tson';
 import {Model} from "./Model.g";
 
-const converterFn = (value: any): boolean => value === 'yes';
-const overrideNameIdentifier = 'override_name';
+const converterFn = (value: any): boolean => value === '1';
+const overrideName = 'override_name';
 
 @Tson
 export class Example {
-
-    public readonly readonlyProp: string;
+    public readonly readonlyString: string;
     public readonly readonlyBool: boolean;
-    public readonly readonlyDate: Date;
-    public readonly readonlyModel: Model;
 
-    constructor(readonlyProp: string, @TsonProp(converterFn) readonlyBool?: boolean, readonlyModel?: Model, readonlyDate: Date = new Date()) {
-        this.readonlyProp = readonlyProp;
+    constructor(readonlyString: string, @TsonProp(converterFn) readonlyBool: boolean) {
+        this.readonlyString = readonlyString;
         this.readonlyBool = readonlyBool;
-        this.readonlyDate = readonlyDate;
-        this.readonlyModel = readonlyModel;
     }
 
-
     @TsonIgnore
-    public ignoredProperty: string = 'assign me in constructor';
+    public ignoredProperty: string = 'ignored property';
+
     @TsonProp('override_name')
-    public overrideName: string;
+    public overrideNameUsingLiteral: string;
+    @TsonProp(overrideName)
+    public overrideNameUsingIdentifier: string;
 
-    @TsonProp({ name: 'override_name', converter: (value: any): boolean => value === 'yes' })
-    public customConverter: boolean = true;
-    @TsonProp((value: any) => value === 'yes')
-    public customConverter2: boolean = true;
+    @TsonProp({ name: overrideName, converter: converterFn })
+    public overrideNameAndCustomConverter: boolean = true;
+    @TsonProp((value: any) => value === '1')
+    public customBooleanConverter: boolean = true;
 
-    @TsonProp(overrideNameIdentifier)
-    public overrideName2: string;
-
-
-    @TsonProp({ name: overrideNameIdentifier, converter: converterFn })
-    public customConverter3: boolean = true;
-    @TsonProp(converterFn)
-    public customConverter4: boolean = true;
-
-    public stringProperty: string = 'default';
-    public numberProperty: number = 0;
-    public booleanProperty: boolean = true;
     public dateProperty: Date = new Date();
     public deserializableProperty: Model;
 }
