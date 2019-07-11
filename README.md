@@ -2,13 +2,64 @@
 
 Generate JSON deserialisation functions using the TypeScript compiler API.
 
-#### Property decorators
+### Types
 
-* `Tson` - Class decorator, tells the transformer what classes to modify.
-* `TsonIgnore(value: boolean = true)` - Do not generate assign a value to this property in the deserialisation function.
-* `TsonProp(name: string)` - Override the default JSON property name.
-* `TsonProp(converter: <T>(value: any) => T` - Use a custom converter function for this property.
-* `TsonProp(props: { name: string, converter: <T>(value: any) => T)` Name override and custom converter combined.
+**TsonConverter\<T\>**
+```typescript
+type Converter<T> = (value: any) => (keyof T);
+```
+
+**TsonConverter\<T\>**
+```typescript
+interface TsonPropProperties<T> {
+    name?: string
+    converter?: Converter<T>
+}
+```
+
+**TsonPropValue\<T\>**
+```typescript
+type TsonPropValue<T> = string | Converter<T> | TsonPropProperties<T>
+```
+
+___
+
+### Class decorator
+**Tson**
+
+*A deserialize function will only be generated for classes with a `Tson` decorator*
+```typescript
+@Tson
+class Model {
+    
+}
+```
+
+___
+
+### Property decorators
+
+**TsonIgnore**
+
+*Properties with `TsonIgnore` decorator will not be assigned in deserialize function*
+```typescript
+class Model {
+    @TsonIgnore
+    public ignoredProperty: string = 'ignored';     
+}
+```
+
+**TsonProp**
+
+*Override the default property key and/or converter function*
+```typescript
+class Model {
+    @TsonProp({ name: 'override_prop', converter: (value: any): string => 'do converter things here.'})
+    public overrides: string = 'ignored';     
+}
+```
+
+___
 
 #### Example
 
@@ -98,5 +149,7 @@ export class Example {
 
 #### TODO
 
-* Deserialize objects | interfaces.
+* `object`
+* interface
+* Array
 
