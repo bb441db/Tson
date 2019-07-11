@@ -16,7 +16,6 @@ import {
     createModifier,
     createNew,
     createNull,
-    createParen,
     createPropertyAccess,
     createReturn,
     createTypeReferenceNode, createUnionTypeNode, createUniqueName,
@@ -151,7 +150,7 @@ export default function (program: Program, node: ClassDeclaration) {
         const tsonPropData = getTsonPropData(member);
         const getJsonPropertyExpression = createElementAccess(jsonArgumentIdentifier, tsonPropData.name);
         if (tsonPropData.converter != null) {
-            return createCall(createParen(tsonPropData.converter), undefined, [getJsonPropertyExpression]);
+            return createCall(tsonPropData.converter, undefined, [getJsonPropertyExpression]);
         }
         if (isBuildInType(member.type)) {
             return createBuiltInSerializerFunction(member, getJsonPropertyExpression);

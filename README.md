@@ -77,12 +77,12 @@ export class Example {
     public deserializableProperty: Model;
     public static fromJson(data_1: any): Example {
         const readonlyString_1: string = String(data_1["readonlyString"]);
-        const readonlyBool_1: boolean = (converterFn)(data_1["readonlyBool"]);
+        const readonlyBool_1: boolean = converterFn(data_1["readonlyBool"]);
         const instance_1: Example = new Example(readonlyString_1, readonlyBool_1);
         instance_1.overrideNameUsingLiteral = String(data_1['override_name']);
         instance_1.overrideNameUsingIdentifier = String(data_1[overrideName]);
         if (data_1["overrideNameAndCustomConverter"] != null)
-            instance_1.overrideNameAndCustomConverter = (converterFn)(data_1[overrideName]);
+            instance_1.overrideNameAndCustomConverter = converterFn(data_1[overrideName]);
         if (data_1["customBooleanConverter"] != null)
             instance_1.customBooleanConverter = ((value: any) => value === '1')(data_1["customBooleanConverter"]);
         if (data_1["dateProperty"] != null)
