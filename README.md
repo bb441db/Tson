@@ -12,12 +12,13 @@ Generate JSON deserialisation functions using the TypeScript compiler API.
 
 #### Example
 
-`yarn codegen testing/src/Example.ts`
+```bash
+yarn codegen testing/src/Example.ts
+```
+
+**[Example.ts](testing/src/Example.ts)**
 
 ```typescript
-
-// Example.ts
-
 import {Tson, TsonIgnore, TsonProp} from 'tson';
 import {Model} from "./Model.g";
 
@@ -50,10 +51,11 @@ export class Example {
     public dateProperty: Date = new Date();
     public deserializableProperty: Model;
 }
+```
 
+**[Example.g.ts](testing/src/Example.g.ts)**
 
-// Example.g.ts
-
+```typescript
 import { Model } from "./Model.g";
 const converterFn = (value: any): boolean => value === '1';
 const overrideName = 'override_name';
