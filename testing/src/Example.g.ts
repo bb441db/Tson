@@ -1,4 +1,6 @@
 import { Model } from "./Model.g";
+const converterFn = (value: any): boolean => value === 'yes';
+const overrideNameIdentifier = 'override_name';
 /*
     *** DO NOT EDIT! ***
     Generated deserializable class from: Example.ts.
@@ -8,7 +10,7 @@ export class Example {
     public readonly readonlyBool: boolean;
     public readonly readonlyDate: Date;
     public readonly readonlyModel: Model;
-    constructor(readonlyProp: string, readonlyBool: boolean, readonlyModel?: Model, readonlyDate: Date = new Date()) {
+    constructor(readonlyProp: string, readonlyBool?: boolean, readonlyModel?: Model, readonlyDate: Date = new Date()) {
         this.readonlyProp = readonlyProp;
         this.readonlyBool = readonlyBool;
         this.readonlyDate = readonlyDate;
@@ -17,6 +19,10 @@ export class Example {
     public ignoredProperty: string = 'assign me in constructor';
     public overrideName: string;
     public customConverter: boolean = true;
+    public customConverter2: boolean = true;
+    public overrideName2: string;
+    public customConverter3: boolean = true;
+    public customConverter4: boolean = true;
     public stringProperty: string = 'default';
     public numberProperty: number = 0;
     public booleanProperty: boolean = true;
@@ -24,13 +30,20 @@ export class Example {
     public deserializableProperty: Model;
     public static fromJson(data_1: any): Example {
         const readonlyProp_1: string = String(data_1["readonlyProp"]);
-        const readonlyBool_1: boolean = Boolean(data_1["readonlyBool"]);
+        const readonlyBool_1: boolean | undefined = data_1["readonlyBool"] != null ? (converterFn)(data_1["readonlyBool"]) : undefined;
         const readonlyModel_1: Model | undefined = data_1["readonlyModel"] != null ? Model.fromJson(data_1["readonlyModel"]) : undefined;
         const readonlyDate_1: Date = data_1["readonlyDate"] != null ? new Date(data_1["readonlyDate"]) : new Date();
         const instance_1: Example = new Example(readonlyProp_1, readonlyBool_1, readonlyModel_1, readonlyDate_1);
-        instance_1.overrideName = String(data_1["override_name"]);
+        instance_1.overrideName = String(data_1['override_name']);
         if (data_1["customConverter"] != null)
-            instance_1.customConverter = ((value: any) => value === 'yes')(data_1['override_name']);
+            instance_1.customConverter = ((value: any): boolean => value === 'yes')(data_1['override_name']);
+        if (data_1["customConverter2"] != null)
+            instance_1.customConverter2 = ((value: any) => value === 'yes')(data_1["customConverter2"]);
+        instance_1.overrideName2 = String(data_1[overrideNameIdentifier]);
+        if (data_1["customConverter3"] != null)
+            instance_1.customConverter3 = (converterFn)(data_1[overrideNameIdentifier]);
+        if (data_1["customConverter4"] != null)
+            instance_1.customConverter4 = (converterFn)(data_1["customConverter4"]);
         if (data_1["stringProperty"] != null)
             instance_1.stringProperty = String(data_1["stringProperty"]);
         if (data_1["numberProperty"] != null)

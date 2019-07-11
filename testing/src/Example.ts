@@ -2,6 +2,9 @@
 import {Tson, TsonIgnore, TsonProp} from 'tson';
 import {Model} from "./Model.g";
 
+const converterFn = (value: any): boolean => value === 'yes';
+const overrideNameIdentifier = 'override_name';
+
 @Tson
 export class Example {
 
@@ -10,7 +13,7 @@ export class Example {
     public readonly readonlyDate: Date;
     public readonly readonlyModel: Model;
 
-    constructor(readonlyProp: string, readonlyBool: boolean, readonlyModel?: Model, readonlyDate: Date = new Date()) {
+    constructor(readonlyProp: string, @TsonProp(converterFn) readonlyBool?: boolean, readonlyModel?: Model, readonlyDate: Date = new Date()) {
         this.readonlyProp = readonlyProp;
         this.readonlyBool = readonlyBool;
         this.readonlyDate = readonlyDate;
@@ -22,8 +25,20 @@ export class Example {
     public ignoredProperty: string = 'assign me in constructor';
     @TsonProp('override_name')
     public overrideName: string;
-    @TsonProp({ name: 'override_name', converter: (value: any) => value === 'yes' })
+
+    @TsonProp({ name: 'override_name', converter: (value: any): boolean => value === 'yes' })
     public customConverter: boolean = true;
+    @TsonProp((value: any) => value === 'yes')
+    public customConverter2: boolean = true;
+
+    @TsonProp(overrideNameIdentifier)
+    public overrideName2: string;
+
+
+    @TsonProp({ name: overrideNameIdentifier, converter: converterFn })
+    public customConverter3: boolean = true;
+    @TsonProp(converterFn)
+    public customConverter4: boolean = true;
 
     public stringProperty: string = 'default';
     public numberProperty: number = 0;
