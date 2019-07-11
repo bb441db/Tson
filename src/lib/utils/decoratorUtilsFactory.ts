@@ -24,6 +24,7 @@ import {
     Type,
     TypeChecker
 } from "typescript";
+import TsonError from "../errors/TsonError";
 
 export interface TsonPropData {
     name: Expression;
@@ -92,7 +93,7 @@ export default function (checker: TypeChecker) {
         const memberType = checker.typeToString(checker.getTypeFromTypeNode(member.type));
         const functionType = checker.typeToString(functionLike.type ? checker.getTypeFromTypeNode(functionLike.type) : getTypeFromSignatureDeclaration(functionLike));
         if (memberType !== functionType) {
-            throw new Error(`(${functionLike.getText()}) Invalid converter function return type, expecting: ${memberType} got ${functionType}`)
+            throw new TsonError(functionLike, `Invalid converter function return type, expecting: ${memberType} got ${functionType}`);
         }
         return true;
     }
