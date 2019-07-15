@@ -64,7 +64,7 @@ ___
 #### Example
 
 ```bash
-yarn codegen testing/src/Example.ts
+yarn codegen ../examples/src/Example.ts
 ```
 
 **[Example.ts](examples/src/Example.ts)**
@@ -147,7 +147,6 @@ export class Example {
 
 #### TODO
 
-* `object`
 * interface
 * Array
 
