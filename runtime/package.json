@@ -1,0 +1,27 @@
+{
+  "name": "tson-runtime",
+  "description": "Class and Property decorators for Tson",
+  "keywords": [
+    "typescript",
+    "json",
+    "deserialization",
+    "serialization",
+    "convert"
+  ],
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "license": "MIT",
+  "author": "bb441db",
+  "homepage": "https://github.com/bb441db/Tson#readme",
+  "bugs": {
+    "url": "https://github.com/bb441db/Tson/issues"
+  },
+  "licenses": [
+    {
+      "license": "MIT"
+    }
+  ],
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  }
+}

@@ -6,7 +6,7 @@ Generate JSON deserialisation functions using the TypeScript compiler API.
 
 **TsonConverter\<T\>**
 ```typescript
-type Converter<T> = (value: any) => (keyof T);
+type Converter<T> = (value: any) => T;
 ```
 
 **TsonConverter\<T\>**
@@ -54,7 +54,7 @@ class Model {
 *Override the default property key and/or converter function*
 ```typescript
 class Model {
-    @TsonProp({ name: 'override_prop', converter: (value: any): string => 'do converter things here.'})
+    @TsonProp<string>({ name: 'override_prop', converter: (value: any): string => 'do converter things here.'})
     public overrides: string = 'ignored';     
 }
 ```
@@ -67,11 +67,10 @@ ___
 yarn codegen testing/src/Example.ts
 ```
 
-**[Example.ts](testing/src/Example.ts)**
+**[Example.ts](examples/src/Example.ts)**
 
 ```typescript
-import {Tson, TsonIgnore, TsonProp} from 'tson';
-import {Model} from "./Model.g";
+import {Tson, TsonIgnore, TsonProp} from 'tson-runtime';
 
 const converterFn = (value: any): boolean => value === '1';
 const overrideName = 'override_name';
@@ -81,7 +80,7 @@ export class Example {
     public readonly readonlyString: string;
     public readonly readonlyBool: boolean;
 
-    constructor(readonlyString: string, @TsonProp(converterFn) readonlyBool: boolean) {
+    constructor(readonlyString: string, readonlyBool: boolean = false) {
         this.readonlyString = readonlyString;
         this.readonlyBool = readonlyBool;
     }
@@ -96,55 +95,54 @@ export class Example {
 
     @TsonProp({ name: overrideName, converter: converterFn })
     public overrideNameAndCustomConverter: boolean = true;
-    @TsonProp((value: any) => value === '1')
+    @TsonProp((value: any) => value === true)
     public customBooleanConverter: boolean = true;
 
     public dateProperty: Date = new Date();
-    public deserializableProperty: Model;
 }
 ```
 
-**[Example.g.ts](testing/src/Example.g.ts)**
+**[Example.g.ts](examples/src/Example.g.ts)**
 
 ```typescript
-import { Model } from "./Model.g";
+import { Tson, TsonIgnore, TsonProp, convertToString, deserializeThrowing, convertToBoolean, deserialize, assignOrThrow, assignIfNotNull, convertToDate } from 'tson-runtime';
 const converterFn = (value: any): boolean => value === '1';
 const overrideName = 'override_name';
 /*
     *** DO NOT EDIT! ***
     Generated deserializable class from: Example.ts.
 */
+@Tson
 export class Example {
     public readonly readonlyString: string;
     public readonly readonlyBool: boolean;
-    constructor(readonlyString: string, readonlyBool: boolean) {
+    constructor(readonlyString: string, readonlyBool: boolean = false) {
         this.readonlyString = readonlyString;
         this.readonlyBool = readonlyBool;
     }
+    @TsonIgnore
     public ignoredProperty: string = 'ignored property';
+    @TsonProp('override_name')
     public overrideNameUsingLiteral: string;
+    @TsonProp(overrideName)
     public overrideNameUsingIdentifier: string;
+    @TsonProp({ name: overrideName, converter: converterFn })
     public overrideNameAndCustomConverter: boolean = true;
+    @TsonProp((value: any) => value === true)
     public customBooleanConverter: boolean = true;
     public dateProperty: Date = new Date();
-    public deserializableProperty: Model;
     public static fromJson(data_1: any): Example {
-        const readonlyString_1: string = String(data_1["readonlyString"]);
-        const readonlyBool_1: boolean = converterFn(data_1["readonlyBool"]);
+        const readonlyString_1: string = deserializeThrowing(data_1, "readonlyString", convertToString);
+        const readonlyBool_1: boolean | undefined = deserialize(data_1, "readonlyBool", convertToBoolean);
         const instance_1: Example = new Example(readonlyString_1, readonlyBool_1);
-        instance_1.overrideNameUsingLiteral = String(data_1['override_name']);
-        instance_1.overrideNameUsingIdentifier = String(data_1[overrideName]);
-        if (data_1["overrideNameAndCustomConverter"] != null)
-            instance_1.overrideNameAndCustomConverter = converterFn(data_1[overrideName]);
-        if (data_1["customBooleanConverter"] != null)
-            instance_1.customBooleanConverter = ((value: any) => value === '1')(data_1["customBooleanConverter"]);
-        if (data_1["dateProperty"] != null)
-            instance_1.dateProperty = new Date(data_1["dateProperty"]);
-        instance_1.deserializableProperty = Model.fromJson(data_1["deserializableProperty"]);
+        assignOrThrow(instance_1, "overrideNameUsingLiteral", data_1, 'override_name', convertToString);
+        assignOrThrow(instance_1, "overrideNameUsingIdentifier", data_1, overrideName, convertToString);
+        assignIfNotNull(instance_1, "overrideNameAndCustomConverter", data_1, overrideName, converterFn);
+        assignIfNotNull(instance_1, "customBooleanConverter", data_1, "customBooleanConverter", (value: any) => value === true);
+        assignIfNotNull(instance_1, "dateProperty", data_1, "dateProperty", convertToDate);
         return instance_1;
     }
 }
-
 ```
 
 #### TODO

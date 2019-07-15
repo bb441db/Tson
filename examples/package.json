@@ -1,0 +1,12 @@
+{
+  "name": "testing",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "tson-runtime": "../runtime"
+  },
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  }
+}
