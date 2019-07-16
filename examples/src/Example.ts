@@ -1,4 +1,5 @@
 import {Tson, TsonIgnore, TsonProp} from 'tson-runtime';
+import Model from "./Model.g";
 
 const converterFn = (value: any): boolean => value === '1';
 const overrideName = 'override_name';
@@ -27,4 +28,8 @@ export class Example {
     public customBooleanConverter: boolean = true;
 
     public dateProperty: Date = new Date();
+
+    public arrayTest: string[] = [];
+    public modelTest?: Model;
+    public modelArrayTest: Model[] = [];
 }

@@ -2,7 +2,7 @@ import {
     assignIfNotNull,
     assignOrThrow,
     convertToBoolean,
-    convertToString,
+    convertToString, createArrayConverter,
     deserialize,
     deserializeThrowing
 } from "./index";
@@ -18,6 +18,7 @@ class TestModel {
 
     public prop: boolean = true;
     public optionalProp?: boolean;
+    public stringArray: string[] = [];
 
     public static fromJson(value: any): TestModel {
         const arg1 = deserialize(value, 'arg1', convertToString);
@@ -25,6 +26,7 @@ class TestModel {
         const model = new TestModel(arg0, arg1);
         assignIfNotNull(model, 'optionalProp', value, 'optionalProp', convertToBoolean);
         assignOrThrow(model, 'prop', value, 'prop', convertToBoolean);
+        assignIfNotNull(model, 'stringArray', value, 'stringArray', createArrayConverter(convertToString));
         return model;
     }
 }
@@ -33,6 +35,7 @@ function test() {
     const model = TestModel.fromJson({
         prop: 1,
         arg0: 'test',
+        stringArray: ['test'],
     });
     console.log(model);
 }

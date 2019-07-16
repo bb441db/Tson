@@ -27,6 +27,10 @@ function createComment(oldPath) {
     return `\n${lines.map(line => `\t${line}`).join('\n')}\n`
 }
 
+function shouldTransform(sourceFile: SourceFile): boolean {
+    return !sourceFile.isDeclarationFile && !/\.g\.ts/.test(sourceFile.fileName) && hasTsonDecoratedClassDeclaration(sourceFile);
+}
+
 function main2() {
     const fileNames = process.argv.slice(2);
     const program = createProgram(fileNames, {
@@ -34,20 +38,18 @@ function main2() {
         module: ModuleKind.CommonJS
     });
 
-    for (const sourceFile of program.getSourceFiles()) {
-        if (!sourceFile.isDeclarationFile && hasTsonDecoratedClassDeclaration(sourceFile)) {
-            const result: TransformationResult<SourceFile> = transform<SourceFile>(
-                sourceFile, [Transformer(program)]
-            );
-            const newFileName = sourceFile.fileName.replace(/(.ts)$/, `${GENERATED_EXT}.ts`);
-            const transformedSourceFile: SourceFile = result.transformed[0];
-            for (const statement of transformedSourceFile.statements.filter(isClassDeclaration)) {
-                addSyntheticLeadingComment(statement, SyntaxKind.MultiLineCommentTrivia, createComment(sourceFile.fileName), true);
-            }
-            const newContent = printer.printFile(transformedSourceFile);
-            result.dispose();
-            writeFileSync(newFileName, newContent);
+    for (const sourceFile of program.getSourceFiles().filter(shouldTransform)) {
+        const result: TransformationResult<SourceFile> = transform<SourceFile>(
+            sourceFile, [Transformer(program)]
+        );
+        const newFileName = sourceFile.fileName.replace(/(.ts)$/, `${GENERATED_EXT}.ts`);
+        const transformedSourceFile: SourceFile = result.transformed[0];
+        for (const statement of transformedSourceFile.statements.filter(isClassDeclaration)) {
+            addSyntheticLeadingComment(statement, SyntaxKind.MultiLineCommentTrivia, createComment(sourceFile.fileName), true);
         }
+        const newContent = printer.printFile(transformedSourceFile);
+        result.dispose();
+        writeFileSync(newFileName, newContent);
     }
 }
 

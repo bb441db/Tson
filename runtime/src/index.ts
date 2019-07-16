@@ -11,6 +11,7 @@ import convertToString from './converters/convertToString';
 import setOptions from './options';
 import deserialize from './utils/deserialize';
 import deserializeThrowing from './utils/deserializeThrowing';
+import createArrayConverter from './utils/createArrayConverter';
 
 export {
     assignIfNotNull,
@@ -20,6 +21,7 @@ export {
     convertToNumber,
     convertToObject,
     convertToString,
+    createArrayConverter,
     setOptions,
     deserialize,
     deserializeThrowing,
