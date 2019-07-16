@@ -43,13 +43,14 @@ function isSerializableProperty(member: ClassElement): member is PropertyDeclara
     return isPropertyDeclaration(member) && !hasReadonlyKeyword(member) && !hasStaticKeyword(member) && !hasTsonIgnoreDecorator(member);
 }
 
-export default function collectProperties(program: Program, classDeclaration: ClassDeclaration): PropertyDeclaration[] {
+export default function *collectProperties(program: Program, classDeclaration: ClassDeclaration): IterableIterator<PropertyDeclaration> {
     const checker = program.getTypeChecker();
-    function collectInheritedMembers(inheritedClassDeclaration: ClassDeclaration, members: PropertyDeclaration[]) {
+    function *collectInheritedMembers(inheritedClassDeclaration: ClassDeclaration, members: PropertyDeclaration[]) {
         const accessibleMembers = inheritedClassDeclaration.members.filter(member => isSerializableInheritedProperty(member, members));
         for (const member of accessibleMembers) {
             if (isPropertyDeclaration(member)) {
                 members.push(member);
+                yield member;
             }
         }
         if (inheritedClassDeclaration.heritageClauses && inheritedClassDeclaration.heritageClauses.length > 0) {
@@ -57,7 +58,7 @@ export default function collectProperties(program: Program, classDeclaration: Cl
                 for (const hct of hc.types) {
                     const declaration = checker.getTypeFromTypeNode(hct).symbol.valueDeclaration;
                     if (isClassDeclaration(declaration)) {
-                        collectInheritedMembers(declaration, members);
+                        yield collectInheritedMembers(declaration, members);
                     }
                 }
             }
@@ -67,6 +68,7 @@ export default function collectProperties(program: Program, classDeclaration: Cl
     for (const member of classDeclaration.members.filter(isSerializableProperty)) {
         if (isPropertyDeclaration(member)) {
             properties.push(member);
+            yield member;
         }
     }
     if (classDeclaration.heritageClauses && classDeclaration.heritageClauses.length > 0) {
@@ -74,7 +76,7 @@ export default function collectProperties(program: Program, classDeclaration: Cl
             for (const hct of hc.types) {
                 const declaration = checker.getTypeFromTypeNode(hct).symbol.valueDeclaration;
                 if (isClassDeclaration(declaration)) {
-                    collectInheritedMembers(declaration, properties);
+                    yield collectInheritedMembers(declaration, properties);
                 }
             }
         }

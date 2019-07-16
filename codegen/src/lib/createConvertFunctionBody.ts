@@ -52,8 +52,7 @@ function createConstructorBlock(program: Program, node: ClassDeclaration, instan
 function createPropertyAssignmentBlock(program: Program, node: ClassDeclaration, instanceIdentifier, jsonIdentifier): Block {
     const checker = program.getTypeChecker();
     const builder = new BlockBuilder();
-    const properties = collectProperties(program, node);
-    for (const property of properties) {
+    for (const property of collectProperties(program, node)) {
         const metadata = getPropertyMetadata(program, property);
         const converter = metadata.converter || getConverter(program, instanceIdentifier, property);
         const assignFunction = isOptional(property)
