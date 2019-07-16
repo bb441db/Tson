@@ -2,34 +2,25 @@ import {Tson, TsonIgnore, TsonProp} from 'tson-runtime';
 import Model from "./Model.g";
 
 const converterFn = (value: any): boolean => value === '1';
-const overrideName = 'override_name';
+
+interface ExampleInterface {
+    test: string;
+}
 
 @Tson
 export class Example {
     public readonly readonlyString: string;
-    public readonly readonlyBool: boolean;
-
-    constructor(readonlyString: string, readonlyBool: boolean = false) {
+    constructor(readonlyString: string) {
         this.readonlyString = readonlyString;
-        this.readonlyBool = readonlyBool;
     }
-
     @TsonIgnore
     public ignoredProperty: string = 'ignored property';
-
     @TsonProp('override_name')
-    public overrideNameUsingLiteral: string;
-    @TsonProp(overrideName)
-    public overrideNameUsingIdentifier: string;
-
-    @TsonProp({ name: overrideName, converter: converterFn })
-    public overrideNameAndCustomConverter: boolean = true;
-    @TsonProp((value: any) => value === true)
-    public customBooleanConverter: boolean = true;
-
+    public overridePropertyName: string;
+    @TsonProp(converterFn)
+    public customConverter: boolean;
     public dateProperty: Date = new Date();
-
     public arrayTest: string[] = [];
     public modelTest?: Model;
-    public modelArrayTest: Model[] = [];
+    public interfaceProp?: ExampleInterface;
 }

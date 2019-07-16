@@ -1,30 +1,40 @@
 import {
+    ArrayTypeNode,
+    createArrowFunction,
     createCall,
     createIdentifier,
     createKeywordTypeNode,
+    createParameter,
     createPropertyAccess,
+    createToken,
+    createUniqueName,
     escapeLeadingUnderscores,
     Expression,
-    Identifier, isArrayTypeNode,
+    Identifier,
     isMethodDeclaration,
     ParameterDeclaration,
     Program,
     PropertyDeclaration,
+    PropertySignature,
     SyntaxKind,
     Type,
     TypeChecker,
-    TypeNode, TypeParameter
+    TypeNode,
+    TypeReferenceNode
 } from "typescript";
 import {
     CONVERT_TO_BOOLEAN,
     CONVERT_TO_DATE,
     CONVERT_TO_NUMBER,
     CONVERT_TO_OBJECT,
-    CONVERT_TO_STRING, CREATE_ARRAY_CONVERTER,
+    CONVERT_TO_STRING,
+    CREATE_ARRAY_CONVERTER,
+    FROM_JSON_ARG_NAME,
     FROM_JSON_FN_NAME
 } from "../constants";
 import addImport from "./addImport";
 import TsonError from "../errors/TsonError";
+import createConvertFunctionBodyForType from "../createConvertFunctionBody";
 
 function typeExportsJsonFunction(checker: TypeChecker, type: Type) {
     const { exports } = type.symbol;
@@ -42,12 +52,53 @@ function typeExportsJsonFunction(checker: TypeChecker, type: Type) {
     }
     return false;
 }
-function getImplicitType(member: ParameterDeclaration | PropertyDeclaration): TypeNode {
+function isDateType(type: Type) {
+    return type.symbol.getName() === 'Date';
+}
+function getImplicitType(member: ParameterDeclaration | PropertyDeclaration | PropertySignature): TypeNode {
     return createKeywordTypeNode(SyntaxKind.AnyKeyword);
 }
-
-function getConverterForTypeNode(program: Program, instance: Identifier, type: TypeNode) {
+function getDeclarationFromTypeReference(checker: TypeChecker, reference: TypeReferenceNode): Type {
+    const { symbol } = checker.getTypeFromTypeNode(reference);
+    return checker.getDeclaredTypeOfSymbol(symbol);
+}
+function generateFunctionForType(program: Program, type: Type): Expression {
     const checker = program.getTypeChecker();
+    const jsonIdentfier = createUniqueName(FROM_JSON_ARG_NAME);
+    const parameter = createParameter(
+        undefined,
+        undefined,
+        undefined,
+        jsonIdentfier,
+        undefined,
+        createKeywordTypeNode(SyntaxKind.AnyKeyword),
+        undefined
+    );
+    const body = createConvertFunctionBodyForType(program, type, jsonIdentfier);
+    return createArrowFunction(
+        undefined,
+        undefined,
+        [parameter],
+        checker.typeToTypeNode(type),
+        createToken(SyntaxKind.EqualsGreaterThanToken),
+        body,
+    )
+}
+function getConverterForTypeReferenceNode(program: Program, typeReferenceNode: TypeReferenceNode): Expression | undefined {
+    const checker = program.getTypeChecker();
+    const referencedType = getDeclarationFromTypeReference(checker, typeReferenceNode);
+    if (referencedType != null) {
+        if (referencedType.isClass() && typeExportsJsonFunction(checker, referencedType)) {
+            return createPropertyAccess(createIdentifier(referencedType.symbol.name), createIdentifier(FROM_JSON_FN_NAME));
+        } else if (referencedType.isClassOrInterface() && isDateType(referencedType)) {
+            return addImport(typeReferenceNode, createIdentifier(CONVERT_TO_DATE));
+        } else {
+            return generateFunctionForType(program, referencedType);
+        }
+    }
+    return undefined;
+}
+function getConverterForTypeNode(program: Program, instance: Identifier, type: TypeNode) {
     switch (type.kind) {
         case SyntaxKind.AnyKeyword:
             return undefined;
@@ -59,24 +110,19 @@ function getConverterForTypeNode(program: Program, instance: Identifier, type: T
             return addImport(type, createIdentifier(CONVERT_TO_STRING));
         case SyntaxKind.ObjectKeyword:
             return addImport(type, createIdentifier(CONVERT_TO_OBJECT));
+        case SyntaxKind.ArrayType:
+            const innerConverter = getConverterForTypeNode(program, instance, (type as ArrayTypeNode).elementType);
+            const createArrayConverter = addImport(type, createIdentifier(CREATE_ARRAY_CONVERTER));
+            return createCall(createArrayConverter, undefined, [innerConverter]);
+        case SyntaxKind.TypeReference:
+            return getConverterForTypeReferenceNode(program, type as TypeReferenceNode);
         default:
-            const typeFromTypeNode = checker.getTypeFromTypeNode(type);
-            if (checker.typeToString(typeFromTypeNode) === 'Date') {
-                return addImport(type, createIdentifier(CONVERT_TO_DATE));
-            }
-            if (isArrayTypeNode(type)) {
-                const innerConverter = getConverterForTypeNode(program, instance, type.elementType);
-                const createArrayConverter = addImport(type, createIdentifier(CREATE_ARRAY_CONVERTER));
-                return createCall(createArrayConverter, undefined, [innerConverter]);
-            }
-            if (typeExportsJsonFunction(checker, typeFromTypeNode)) {
-                return createPropertyAccess(createIdentifier(typeFromTypeNode.symbol.name), createIdentifier(FROM_JSON_FN_NAME));
-            }
+            console.log('SyntaxKind', type.kind);
             return undefined;
     }
 }
 
-export default function getConverter(program: Program, instance: Identifier, member: ParameterDeclaration | PropertyDeclaration): Expression {
+export default function getConverter(program: Program, instance: Identifier, member: ParameterDeclaration | PropertyDeclaration | PropertySignature): Expression {
     const type = member.type || getImplicitType(member);
     const converter = getConverterForTypeNode(program, instance, type);
     if (converter != undefined) {

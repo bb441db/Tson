@@ -1,10 +1,13 @@
 import {
     ClassDeclaration,
-    ClassElement, ConstructorDeclaration, createNodeArray,
-    Identifier, isClassDeclaration, isConstructorDeclaration,
+    ClassElement,
+    Identifier,
+    isClassDeclaration,
     isDecorator,
-    isIdentifier, isParameter,
-    isPropertyDeclaration, NodeArray, ParameterDeclaration, Program, PropertyDeclaration,
+    isIdentifier,
+    isPropertyDeclaration,
+    Program,
+    PropertyDeclaration,
     SyntaxKind
 } from "typescript";
 
@@ -43,7 +46,7 @@ function isSerializableProperty(member: ClassElement): member is PropertyDeclara
     return isPropertyDeclaration(member) && !hasReadonlyKeyword(member) && !hasStaticKeyword(member) && !hasTsonIgnoreDecorator(member);
 }
 
-export default function *collectProperties(program: Program, classDeclaration: ClassDeclaration): IterableIterator<PropertyDeclaration> {
+export default function *collectClassDeclarationProperties(program: Program, classDeclaration: ClassDeclaration): IterableIterator<PropertyDeclaration> {
     const checker = program.getTypeChecker();
     function *collectInheritedMembers(inheritedClassDeclaration: ClassDeclaration, members: PropertyDeclaration[]) {
         const accessibleMembers = inheritedClassDeclaration.members.filter(member => isSerializableInheritedProperty(member, members));
@@ -81,5 +84,4 @@ export default function *collectProperties(program: Program, classDeclaration: C
             }
         }
     }
-    return properties;
 }
